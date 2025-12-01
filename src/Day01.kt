@@ -1,21 +1,22 @@
+private const val START = 50
+private const val MAX_EXCLUSIVE = 100
+
 fun main() {
+    fun String.moveIt() = first()
+        .let { direction -> this.drop(1).toInt() * if (direction == 'R') 1 else -1 }
+
+    fun Int.normalizePosition() = takeIf { it >= 0 } ?: (this + MAX_EXCLUSIVE)
+
     fun part1(input: List<String>): Int {
-        return input.size
+        var currentPosition = START
+        return input
+            .count { line ->
+                val stepSize = line.moveIt() % MAX_EXCLUSIVE
+                currentPosition = (currentPosition + stepSize).normalizePosition() % MAX_EXCLUSIVE
+                currentPosition == 0
+            }
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
-    }
-
-    // Test if implementation meets criteria from the description, like:
-    check(part1(listOf("test_input")) == 1)
-
-    // Or read a large test input from the `src/Day01_test.txt` file:
-    val testInput = readInput("Day01_test")
-    check(part1(testInput) == 1)
-
-    // Read the input from the `src/Day01.txt` file.
     val input = readInput("Day01")
     part1(input).println()
-    part2(input).println()
 }
