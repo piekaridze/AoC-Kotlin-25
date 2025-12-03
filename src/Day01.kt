@@ -15,36 +15,35 @@ fun main() {
     }
 
     fun part2(input: List<String>): Int {
-        var currentPosition = START
-        var zeroesPassed = 0
-        for (line in input) {
-            val stepSize = line.moveIt()
-//            println("Pos $currentPosition, Step $line parsed as $stepSize")
-            val incrByFullRound = abs((stepSize + currentPosition) / 100)
-            zeroesPassed += incrByFullRound
-            if (movedBackOverZero(stepSize, currentPosition)) zeroesPassed++
-            currentPosition = getPosition(currentPosition, stepSize)
-            if (currentPosition == 0) { zeroesPassed++ }
-        }
-        return zeroesPassed
+        var zeroesCount = 0
+        input.map { line -> line.moveIt() }
+            .fold(START) { currentPosition, stepSize ->
+                zeroesCount += abs(stepSize / MAX_EXCLUSIVE)
+                val newPosition = getPosition(currentPosition, stepSize)
+                if (newPosition == 0 ||
+                    stepSize > 0 && newPosition < currentPosition ||
+                    currentPosition != 0 && stepSize < 0 && newPosition > currentPosition) {
+                    zeroesCount++
+                }
+                newPosition
+            }
+
+        return zeroesCount
     }
 
 
     val input = readInput("Day01")
     val one = part1(input).also { it.println() } // 1182 OK
-    val two = part2(input).also { it.println() } // 8217 Not OK
+    val two = part2(input).also { it.println() } // 6907 OK
 }
 
 fun String.moveIt() = first()
     .let { direction -> this.drop(1).toInt() * if (direction == 'R') 1 else -1 }
 
-fun Int.normalizePosition() = takeIf { it >= 0 } ?: (this % 100 + MAX_EXCLUSIVE)
+fun Int.normalizePosition() = takeIf { it >= 0 } ?: (this % MAX_EXCLUSIVE + MAX_EXCLUSIVE)
 
-fun getPosition(currentPosition: Int, stepSize: Int): Int {
-    val x =  (currentPosition + stepSize).normalizePosition() % MAX_EXCLUSIVE
-    require(x in 0..<MAX_EXCLUSIVE) { "X should be in range [0, $MAX_EXCLUSIVE)" }
-    return x
+fun getPosition(position: Int, stepSize: Int): Int {
+    val newPosition =  (position + stepSize).mod(MAX_EXCLUSIVE)
+    require(newPosition in 0..<MAX_EXCLUSIVE) { "position should be in range [0, $MAX_EXCLUSIVE), but was $newPosition" }
+    return newPosition
 }
-
-fun movedBackOverZero(stepSize: Int, currentPosition: Int): Boolean = stepSize + currentPosition < 0
-
