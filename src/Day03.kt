@@ -14,9 +14,7 @@ fun main() {
 
 }
 
-private fun part1(batteries: List<String>): Int {
-    return batteries.sumOf { it.toMaxJolts() }
-}
+private fun part1(batteries: List<String>): Int = batteries.sumOf { it.toMaxJolts() }
 
 private fun String.toMaxJolts(): Int {
     val batteries = this.chunked(1).map { it.toByte() }
@@ -30,44 +28,40 @@ private fun String.toMaxJolts(): Int {
             maxSecond = batteries[i]
         }
     }
-    val result = maxFirst*10+maxSecond
+    val maxBatteryJolts = maxFirst*10+maxSecond
 //    println("Maximum value of jolts is $result for $this")
-    return result
+    return maxBatteryJolts
 }
 
 // **** part 2 ****
 
-private fun part2(batteries: List<String>): Long {
-    return batteries.sumOf { it.toMaxJolts12() }
-}
+private fun part2(batteries: List<String>): Long = batteries.sumOf { it.toMaxJolts12() }
 
 private fun String.toMaxJolts12(): Long {
     val batteries = this.chunked(1).map { it.toByte() }
     val battery = batteries.take(12).toMutableList()
-    val rest = batteries.drop(12)
-    rest.forEach { candidate ->
-        for (i in 0..(battery.size-2)) {
-            if (battery[i] < battery[i + 1]) {
-                battery.removeAndShift(i, candidate)
-                return@forEach
-            }
-        }
-
-        candidate.takeIf { it > battery.last() }
-            ?.run { battery.removeLast() }
-            ?.also { battery.addLast(candidate) }
-
-    }
-    val result = battery.foldIndexed(0L) { index, acc, next ->
-        return@foldIndexed acc + next * tens[index]
-    }
-    println("Maximum value of jolts [$battery] is $result for $this")
-    return result
+    val restOfBatteries = batteries.drop(12)
+    restOfBatteries.forEach { candidate -> tryToGetBetterJolts(battery, candidate) }
+    val maxBatteryJolts = battery.foldIndexed(0L) { index, acc, next -> acc + next * tens[index] }
+//    println("Maximum value of jolts is $result for $this")
+    return maxBatteryJolts
 }
 
-private fun MutableList<Byte>.removeAndShift(i: Int, candidate: Byte) {
-    this.removeAt(i)
-    this.addLast(candidate)
+private fun tryToGetBetterJolts(battery: MutableList<Byte>, candidate: Byte) {
+    battery.findIndexToRemoveAt()
+        ?.let { battery.removeAndShift(it, candidate) }
+        ?: candidate.takeIf { it > battery.last() }
+        ?.run { battery.removeLast() }
+        ?.also { battery.addLast(candidate) }
 }
+
+private fun List<Byte>.findIndexToRemoveAt(): Int? = indices
+    .take(size-1)
+    .firstOrNull { this[it] < this[it + 1] }
+
+
+private fun MutableList<Byte>.removeAndShift(i: Int, candidate: Byte) =
+    removeAt(i)
+        .also { addLast(candidate) }
 
 private val tens = IntRange(0, 11).reversed().map { 10.0.pow(it).toLong() }
